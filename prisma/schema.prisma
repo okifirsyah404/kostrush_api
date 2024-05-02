@@ -1,0 +1,210 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Account {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User?
+}
+
+model Profile {
+  id          String   @id @default(cuid())
+  name        String
+  occupation  String?
+  phoneNumber String?
+  address     String?
+  imageAvatar String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  user        User?
+  owner       Owner?
+}
+
+model User {
+  id          String        @id @default(cuid())
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  account     Account       @relation(fields: [accountId], references: [id])
+  profile     Profile       @relation(fields: [profileId], references: [id])
+  accountId   String        @unique
+  profileId   String        @unique
+  transaction Transaction[]
+}
+
+model Owner {
+  id        String      @id @default(cuid())
+  profile   Profile     @relation(fields: [profileId], references: [id])
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  profileId String      @unique
+  dormitory Dormitory[]
+}
+
+model Dormitory {
+  id                    String                 @id @default(cuid())
+  name                  String
+  availableRoom         Int
+  dormitoryType         DormitoryType
+  dormitoryGender       DormitoryGender
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  transaction           Transaction[]
+  owner                 Owner?                 @relation(fields: [ownerId], references: [id])
+  ownerId               String?
+  dormitoryLocation     DormitoryLocation?
+  dormitoryFacility     DormitoryFacility?
+  dormitoryBathFacility DormitoryBathFacility?
+  dormitoryRules        DormitoryRules?
+  dormitoryImage        DormitoryImage[]
+  dormitoryPrice        DormitoryPrice?
+}
+
+model DormitoryLocation {
+  id          String     @id @default(cuid())
+  latitude    Float
+  longitude   Float
+  address     String
+  sublocality String
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  dormitory   Dormitory? @relation(fields: [dormitoryId], references: [id])
+  dormitoryId String?    @unique
+}
+
+model DormitoryFacility {
+  id             String     @id @default(cuid())
+  roomWidth      Float
+  roomLength     Float
+  roomHeight     Float?
+  wifi           Boolean
+  bed            Boolean
+  airConditioner Boolean
+  bathroom       Boolean
+  wardrobe       Boolean
+  pillow         Boolean
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+  dormitory      Dormitory? @relation(fields: [dormitoryId], references: [id])
+  dormitoryId    String?    @unique
+}
+
+model DormitoryBathFacility {
+  id          String     @id @default(cuid())
+  shower      Boolean
+  toilet      Boolean
+  sink        Boolean
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  dormitory   Dormitory? @relation(fields: [dormitoryId], references: [id])
+  dormitoryId String?    @unique
+}
+
+model DormitoryRules {
+  id                        String     @id @default(cuid())
+  maxPeople                 Int
+  isSmokingAllowed          Boolean
+  isPetAllowed              Boolean
+  isCoupleAllowed           Boolean
+  isGuestAllowed            Boolean
+  isGuestOtherGenderAllowed Boolean
+  maxGuestVisitTime         DateTime?
+  createdAt                 DateTime   @default(now())
+  updatedAt                 DateTime   @updatedAt
+  dormitory                 Dormitory? @relation(fields: [dormitoryId], references: [id])
+  dormitoryId               String?    @unique
+}
+
+model DormitoryImage {
+  id          String     @id @default(cuid())
+  url         String
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  dormitory   Dormitory? @relation(fields: [dormitoryId], references: [id])
+  dormitoryId String?
+}
+
+model DormitoryPrice {
+  id           String     @id @default(cuid())
+  price        Int
+  depositPrice Int
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  dormitory    Dormitory? @relation(fields: [dormitoryId], references: [id])
+  dormitoryId  String?    @unique
+}
+
+model Transaction {
+  id                    String              @id @default(cuid())
+  status                TransactionStatus
+  totalPrice            Int
+  createdAt             DateTime            @default(now())
+  updatedAt             DateTime            @updatedAt
+  transactionTime       TransactionTime     @relation(fields: [transactionTimeId], references: [id])
+  transactionEvidence   TransactionEvidence @relation(fields: [transactionEvidenceId], references: [id])
+  transactionTimeId     String              @unique
+  transactionEvidenceId String              @unique
+  dormitory             Dormitory           @relation(fields: [dormitoryId], references: [id])
+  user                  User                @relation(fields: [userId], references: [id])
+  dormitoryId           String
+  userId                String
+}
+
+model TransactionTime {
+  id            String       @id @default(cuid())
+  checkIn       DateTime
+  checkOut      DateTime
+  durationMonth Int
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  transaction   Transaction?
+}
+
+model TransactionEvidence {
+  id          String       @id @default(cuid())
+  url         String
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  transaction Transaction?
+}
+
+model Otp {
+  id        String   @id @default(cuid())
+  email     String
+  otp       String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum TransactionStatus {
+  PENDING
+  PROCESSING
+  DONE
+}
+
+enum DormitoryType {
+  REGULAR
+  PREMIUM
+  VIP
+}
+
+enum DormitoryGender {
+  MALE
+  FEMALE
+  UNISEX
+}
