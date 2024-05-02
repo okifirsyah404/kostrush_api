@@ -15,6 +15,14 @@ async function seedUserImage(prisma: PrismaClient) {
   try {
     const imagePaths = join(basePaths, 'profile');
 
+    if (!fs.existsSync(basePaths)) {
+      fs.mkdir(basePaths, (err) => {
+        if (err) {
+          throw err;
+        }
+      });
+    }
+
     if (!fs.existsSync(imagePaths)) {
       fs.mkdir(imagePaths, (err) => {
         if (err) {
