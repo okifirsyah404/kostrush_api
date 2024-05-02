@@ -157,6 +157,8 @@ async function seedDormitoryImage(prisma: PrismaClient) {
                 },
               },
             });
+
+            await new Promise((resolve) => setTimeout(resolve, 100));
           }
 
           await new Promise((resolve) => setTimeout(resolve, 100));
